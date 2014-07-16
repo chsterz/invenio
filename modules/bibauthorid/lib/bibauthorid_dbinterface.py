@@ -4353,7 +4353,7 @@ def get_author_names_from_db(pid):  # get_person_db_names_set
 
     return zip(zip(*names)[0])
 
-
+# TMP CHRISTOPH
 def get_all_valid_bibrecs():
     '''
     Gets all valid bibrecs.
@@ -4361,7 +4361,7 @@ def get_all_valid_bibrecs():
     @return: paper identifiers
     @rtype: list [int,]
     '''
-    return perform_request_search(c=bconfig.LIMIT_TO_COLLECTIONS, rg=0)
+    return perform_request_search(cc="ATLAS")
 
 
 def get_name_by_bibref(ref):  # get_name_by_bibrecref
