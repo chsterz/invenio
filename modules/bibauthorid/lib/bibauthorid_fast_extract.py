@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import invenio.bibauthorid_name_utils as name_utils
 import invenio.dbquery as db
 import time
@@ -79,5 +77,3 @@ def postprocess_and_collate_authors():
     print "[*] Number of distinct Author Records left after this step:", len(name_set)
 
     return name_set
-
-postprocess_and_collate_authors()
