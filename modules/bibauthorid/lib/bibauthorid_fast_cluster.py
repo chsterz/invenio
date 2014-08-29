@@ -1,7 +1,8 @@
 import sklearn.decomposition as deco
 from sklearn.cluster import DBSCAN
 
-from invenio.bibauthorid import bibauthorid_fast_extract
+from inveinio.bibauthorid import bibauthorid_fast_extract
+import bibauthorid_fast_extract
 
 import numpy as np
 import time
@@ -17,7 +18,7 @@ class BibauthorID_Fast_Clustering():
         self.get_name_vector_lengths()
         self.generate_null_vector()	
         compressed_dimensions = 5
-        self.compress_data( compressed_dimensions, self.encode_data(self.preprocessed_data) )
+        self.compress_data( compressed_dimensions, self.encode_data() )
         self.labels = self.cluster()
         self.print_clusters()
     
@@ -37,56 +38,57 @@ class BibauthorID_Fast_Clustering():
     compressed_data = []
 
 
-    def get_name_vector_lenghts(self):
+    def get_name_vector_lengths(self):
 	''' gets the lengths of the longest first, middle, middle, and last name '''
         for name, dummy, dummy in self.preprocessed_data:
             parts = name.split(" ")
             
             #we only consider first, last and two middle names, the rest gets deleted
             part_number = len(parts)
-            if( partnumber > 4 ): del parts[2:-2]
+            if( part_number > 4 ): del parts[2:-2]
             
             #last name is given most often
-            last_name_length = len(parts[3])
-            if( last_name_length > self.name_vector_lengths[3]): self.name_vector_lengths[3] = last_name_length
+            last_name_length = len(parts[-1])
+            if( last_name_length > self.name_vector_lengths[-1]): self.name_vector_lengths[-1] = last_name_length
 
             #if there is no first name, continue
-            if( partNumber <= 1 ): continue
+            if( part_number <= 1 ): continue
             first_name_length = len(parts[0])
-            if( last_name_length > self.name_vector_lengths[0]): self.name_vector_lengths[0] = first_name_length
+            if( first_name_length > self.name_vector_lengths[0]): self.name_vector_lengths[0] = first_name_length
 
             #if there is no mid1 name, continue
-            if( partNumber <= 2 ): continue
+            if( part_number <= 2 ): continue
             mid1_name_length = len(parts[1])
-            if( last_name_length > self.name_vector_lengths[1]): self.name_vector_lengths[3] = mid1_name_length
+            if( mid1_name_length > self.name_vector_lengths[1]): self.name_vector_lengths[3] = mid1_name_length
 
             #if there is no mid2 name, continue
-            if( partNumber <= 3 ): continue
+            if( part_number <= 3 ): continue
             mid2_name_length = len(parts[2])
-            if( last_name_length > self.name_vector_lengths[2]): self.name_vector_lengths[2] = mid2_name_length 
+            if( mid2_name_length > self.name_vector_lengths[2]): self.name_vector_lengths[2] = mid2_name_length 
 
 
     def generate_null_vector(self):
         ''' fills the nullvector with missing data '''
-        for i in range(sum(self.null_vector)):
-            self.nullvector.append(self.missing_data)
+        for i in range(sum(self.name_vector_lengths)):
+            self.null_vector.append(self.missing_data)
 
 
-    def encode_character(self):
+    def encode_character(self, character):
         ''' applies the enoding maximising the variance in the given name encoding '''
-        return self.shuffleAlphabet[ ord(char) - 65 - 32]
+        return self.shuffle_alphabet[ ord(character) - 65 - 32]
 
 
-    def name_vector(self, name)
+    def name_vector(self, name):
         ''' transforms the name string into a consistent vector '''
         name =  name.strip()
         parts = name.split(" ")
         part_number = len(parts)
         vector = self.null_vector[:]
+        print self.null_vector
 	
 	#again, we only consider first, last and two middle names, the rest gets deleted
-            part_number = len(parts)
-            if( partnumber > 4 ): del parts[2:-2]
+        part_number = len(parts)
+        if( part_number > 4 ): del parts[2:-2]
 
 	#encode last name, starts at the point where all the previous nameparts stop
         #we set weights descending with 0.5 steps from 10 for the name
@@ -122,12 +124,13 @@ class BibauthorID_Fast_Clustering():
         return vector
 
 
-    def encode_data(self)
+    def encode_data(self):
         ''' encode the names, returning a purely numerical matrix '''
         #create a matrix the size (#vectors x vectorlength)
-        encoded_data = np.array( len(self.preprocessed_data), sum(self.name_vector_lengths) )
+        encoded_data = np.zeros( (len(self.preprocessed_data), sum(self.name_vector_lengths)) )
+	print encoded_data
         for index, dataset in enumerate(self.preprocessed_data):
-            encoded_data[index] = self.name_vector( dataset[0] )
+            encoded_data[index] = np.array(self.name_vector( dataset[0] ))
 
 
     def compress_data(self, target_vector_length, matrix):
@@ -137,13 +140,13 @@ class BibauthorID_Fast_Clustering():
         return pca.transform(matrix)
 
 
-    def cluster(self)
+    def cluster(self):
         ''' use DBSCAN for clustering '''
         dbscan = DBSCAN(eps=0.7, algorithm="kd_tree").fit(self.reduced_data)
         return dbscan.labels_
 
 
-    def print_clusters(self)
+    def print_clusters(self):
         ''' print the first 50 clusters for visual checking '''
         for cluster in range(50):
             print "cluster", cluster, ":"
